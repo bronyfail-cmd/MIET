@@ -15,8 +15,34 @@ flask --app wsgi init-db
 flask --app wsgi validate                              # проверка модуля
 flask --app wsgi create-teacher teacher@example.com "Фамилия Имя"   # доступ к /admin
 flask --app wsgi run                                   # http://127.0.0.1:5000
-pytest                                                 # тесты
+python -m pytest                                       # тесты
 ```
+
+## Запуск на Windows (по шагам)
+
+1. Установите Python 3.10+ с https://www.python.org/downloads/ — на первом экране
+   установщика включите галочку **Add python.exe to PATH**. Проверка: `python --version`.
+2. Распакуйте проект, например в `C:\Projects\MIET`. В проводнике откройте папку,
+   где лежит `wsgi.py`, в адресной строке введите `cmd` и нажмите Enter.
+3. Создайте и включите виртуальное окружение (один раз):
+   ```
+   python -m venv .venv
+   .venv\Scripts\activate
+   ```
+   В начале строки появится `(.venv)`.
+   В PowerShell при ошибке про выполнение сценариев: `Set-ExecutionPolicy -Scope Process Bypass`.
+4. Установите библиотеки (один раз): `pip install -r requirements.txt`
+5. Проверьте тесты (по желанию): `python -m pytest` → `43 passed`.
+6. Запустите сайт: `flask --app wsgi run` и откройте http://127.0.0.1:5000
+   Окно терминала не закрывайте; остановка — `Ctrl + C`.
+7. Учётка преподавателя (раздел «Результаты» и «Валидатор»): остановите сервер и выполните
+   `flask --app wsgi create-teacher teacher@test.ru "Иванова Мария"`, затем снова запустите сайт.
+
+**Важно:** в каждом новом окне терминала сначала выполняйте `.venv\Scripts\activate`,
+иначе команды `flask` и `pytest` не найдутся.
+
+Если порт 5000 занят: `flask --app wsgi run --port 5050`.
+Чистая база: остановите сервер и удалите папку `instance`.
 
 ## Структура
 
