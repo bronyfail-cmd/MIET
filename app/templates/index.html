@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="card hero">
+  <h1>Тестирование личностных характеристик</h1>
+  <p>Пройдите набор методик и получите «Портрет личности» с интерпретацией по каждому спектру.
+     Результаты сохраняются в личном кабинете.</p>
+  <p><a class="btn" href="{{ url_for('web.register') }}">Начать</a>
+     <a class="btn ghost" href="{{ url_for('web.login') }}">Войти</a></p>
+</section>
+{% endblock %}

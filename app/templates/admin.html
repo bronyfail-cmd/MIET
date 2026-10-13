@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Результаты студентов{% endblock %}
+{% block content %}
+<section class="card">
+  <h1>Результаты студентов</h1>
+  <form method="get" class="filters">
+    <label>ФИО <input name="q" value="{{ args.get('q', '') }}"></label>
+    <label>Группа
+      <select name="group"><option value="">все</option>
+        {% for g_ in groups %}<option {% if args.get('group') == g_ %}selected{% endif %}>{{ g_ }}</option>{% endfor %}
+      </select></label>
+    <label>Методика
+      <select name="method"><option value="">все</option>
+        {% for id, m in methods.items() %}<option value="{{ id }}" {% if args.get('method') == id %}selected{% endif %}>{{ m.title }}</option>{% endfor %}
+      </select></label>
+    <label>Уровень
+      <select name="level"><option value="">любой</option>
+        {% for l in ('низкий', 'средний', 'высокий') %}<option {% if args.get('level') == l %}selected{% endif %}>{{ l }}</option>{% endfor %}
+      </select></label>
+    <label>Статус
+      <select name="status"><option value="">любой</option>
+        {% for s in ('ok', 'incomplete', 'invalid', 'missing') %}<option {% if args.get('status') == s %}selected{% endif %}>{{ s }}</option>{% endfor %}
+      </select></label>
+    <label>С <input type="date" name="date_from" value="{{ args.get('date_from', '') }}"></label>
+    <label>По <input type="date" name="date_to" value="{{ args.get('date_to', '') }}"></label>
+    <button class="btn">Применить</button>
+    <a class="btn ghost" href="{{ url_for('web.admin_export', **args) }}">Экспорт CSV</a>
+  </form>
+  <p class="muted">Найдено строк: {{ rows|length }}</p>
+  <table>
+    <tr><th>ФИО</th><th>Группа</th><th>Методика</th><th>Балл</th><th>Уровень</th><th>Статус</th><th>Завершено</th><th></th></tr>
+    {% for r in rows %}
+    <tr>
+      <td>{{ r['full_name'] }}</td><td>{{ r['study_group'] }}</td><td>{{ r['title'] }}</td>
+      <td>{% if r['score'] is not none %}{{ r['score']|round(1) }} / {{ r['max_score']|round(1) }}{% endif %}</td>
+      <td>{{ r['level'] or '' }}</td><td>{{ r['status'] }}</td><td>{{ r['finished_at'] }}</td>
+      <td><a href="{{ url_for('web.result', attempt_id=r['attempt_id']) }}">Портрет</a></td>
+    </tr>
+    {% endfor %}
+  </table>
+</section>
+{% endblock %}

@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Регистрация{% endblock %}
+{% block content %}
+<section class="card narrow">
+  <h1>Регистрация</h1>
+  <form method="post">
+    <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+    <label>ФИО <input name="full_name" required value="{{ request.form.get('full_name', '') }}"></label>
+    <label>Группа <input name="study_group" placeholder="ИС-25-21С" value="{{ request.form.get('study_group', '') }}"></label>
+    <label>E-mail <input type="email" name="email" required value="{{ request.form.get('email', '') }}"></label>
+    <label>Пароль <input type="password" name="password" minlength="6" required></label>
+    <button class="btn">Зарегистрироваться</button>
+  </form>
+</section>
+{% endblock %}

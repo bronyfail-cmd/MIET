@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Личный кабинет{% endblock %}
+{% block content %}
+<section class="card">
+  <h1>Личный кабинет</h1>
+  <p><b>{{ g.user['full_name'] }}</b>{% if g.user['study_group'] %}, группа {{ g.user['study_group'] }}{% endif %}</p>
+  <p>Методик в опросе: {{ methods|length }}.</p>
+  <form method="post" action="{{ url_for('web.survey_start') }}">
+    <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+    <button class="btn">{% if attempts and attempts[0]['status'] == 'in_progress' %}Продолжить опрос{% else %}Пройти опрос{% endif %}</button>
+  </form>
+</section>
+<section class="card">
+  <h2>Мои попытки</h2>
+  {% if attempts %}
+  <table>
+    <tr><th>№</th><th>Начата</th><th>Статус</th><th></th></tr>
+    {% for a in attempts %}
+    <tr>
+      <td>{{ a['id'] }}</td><td>{{ a['started_at'] }}</td>
+      <td>{{ 'завершена' if a['status'] == 'finished' else 'в процессе' }}</td>
+      <td>
+        {% if a['status'] == 'finished' %}<a href="{{ url_for('web.result', attempt_id=a['id']) }}">Результаты</a>
+        {% else %}<a href="{{ url_for('web.survey', attempt_id=a['id']) }}">Продолжить</a>{% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% else %}<p class="muted">Попыток пока нет.</p>{% endif %}
+</section>
+{% endblock %}

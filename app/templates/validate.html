@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Валидатор{% endblock %}
+{% block content %}
+<section class="card">
+  <h1>Проверка модуля: {{ 'ОК' if report.ok else 'есть ошибки' }}</h1>
+  <p>Подключено методик: {{ report.methods|length }} ({{ report.methods|join(', ') }})</p>
+  {% if report.issues %}
+  <table>
+    <tr><th>Уровень</th><th>Методика</th><th>Проверка</th><th>Сообщение</th></tr>
+    {% for i in report.issues %}
+    <tr><td>{{ i.level }}</td><td>{{ i.method }}</td><td>{{ i.check }}</td><td>{{ i.message }}</td></tr>
+    {% endfor %}
+  </table>
+  {% else %}<p>Замечаний нет.</p>{% endif %}
+</section>
+{% endblock %}

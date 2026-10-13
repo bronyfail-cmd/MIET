@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Ошибка{% endblock %}
+{% block content %}
+<section class="card">
+  <h1>Что-то пошло не так</h1>
+  <p>{{ message }}</p>
+  {% if errors %}<ul>{% for e in errors %}<li>{{ e.method_id }}: {{ e.error }}</li>{% endfor %}</ul>{% endif %}
+  <p><a class="btn ghost" href="{{ url_for('web.cabinet') }}">В кабинет</a></p>
+</section>
+{% endblock %}

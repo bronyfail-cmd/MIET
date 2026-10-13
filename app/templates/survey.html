@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Опрос{% endblock %}
+{% block content %}
+<section class="card">
+  <div class="progress"><div style="width: {{ progress.percent }}%"></div></div>
+  <p class="muted">Вопрос {{ position + 1 }} из {{ total }} · отвечено {{ progress.done }} · {{ method.title }}</p>
+  {% if method.demo %}<p class="muted">Демо-методика: вопросы-заглушки.</p>{% endif %}
+  {% if block_errors %}<div class="flash error">Часть блоков недоступна: {{ block_errors|map(attribute='method_id')|join(', ') }}</div>{% endif %}
+  <h2>{{ q.text }}</h2>
+  <form method="post">
+    <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+    <input type="hidden" name="question_id" value="{{ q.id }}">
+    <div class="options">
+      {% for o in q.options %}
+      <label class="opt"><input type="radio" name="value" value="{{ o.value }}" {% if current_answer == o.value %}checked{% endif %}> {{ o.label }}</label>
+      {% endfor %}
+    </div>
+    <div class="actions">
+      <button class="btn ghost" name="action" value="prev" formnovalidate {% if position == 0 %}disabled{% endif %}>Назад</button>
+      <button class="btn ghost" name="action" value="skip" formnovalidate>Пропустить</button>
+      {% if is_last %}
+        <button class="btn" name="action" value="finish">Завершить</button>
+      {% else %}
+        <button class="btn" name="action" value="next">Далее</button>
+      {% endif %}
+    </div>
+  </form>
+</section>
+{% endblock %}
