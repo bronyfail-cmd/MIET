@@ -1,0 +1,167 @@
+{
+  "id": "eysenck",
+  "title": "Экстраверсия, нейротизм, психотизм",
+  "kind": "scale",
+  "demo": false,
+  "scale": {
+    "min": 1,
+    "max": 5,
+    "labels": {
+      "1": "не выражена",
+      "2": "скорее не выражена",
+      "3": "выражена",
+      "4": "заметно выражена",
+      "5": "очень выражена"
+    }
+  },
+  "subscales": {
+    "extra": "Экстраверсия",
+    "neuro": "Нейротизм",
+    "psych": "Психотизм"
+  },
+  "questions": [
+    {
+      "n": 1,
+      "text": "Я разговорчивый человек",
+      "subscale": "extra",
+      "reverse": false
+    },
+    {
+      "n": 2,
+      "text": "Меня легко обидеть",
+      "subscale": "neuro",
+      "reverse": false
+    },
+    {
+      "n": 3,
+      "text": "Я легко общаюсь на вечеринках и в компаниях",
+      "subscale": "extra",
+      "reverse": false
+    },
+    {
+      "n": 4,
+      "text": "Для меня мало значат хорошие манеры и чистоплотность",
+      "subscale": "psych",
+      "reverse": false
+    },
+    {
+      "n": 5,
+      "text": "Меня часто беспокоит чувство вины",
+      "subscale": "neuro",
+      "reverse": false
+    },
+    {
+      "n": 6,
+      "text": "У меня много друзей",
+      "subscale": "extra",
+      "reverse": false
+    },
+    {
+      "n": 7,
+      "text": "Я считаю себя нервным человеком",
+      "subscale": "neuro",
+      "reverse": false
+    },
+    {
+      "n": 8,
+      "text": "Я безразличен к ошибкам, допущенным в своей работе",
+      "subscale": "psych",
+      "reverse": false
+    },
+    {
+      "n": 9,
+      "text": "Я считаю, что брак старомоден и его следует отменить",
+      "subscale": "psych",
+      "reverse": false
+    },
+    {
+      "n": 10,
+      "text": "Мои нервы редко бывают натянуты до предела",
+      "subscale": "neuro",
+      "reverse": false
+    },
+    {
+      "n": 11,
+      "text": "Я много говорю в обществе других людей",
+      "subscale": "extra",
+      "reverse": false
+    },
+    {
+      "n": 12,
+      "text": "Я отвечаю на грубость тем же",
+      "subscale": "psych",
+      "reverse": false
+    },
+    {
+      "n": 13,
+      "text": "Мне по силам организовать вечеринку",
+      "subscale": "extra",
+      "reverse": false
+    },
+    {
+      "n": 14,
+      "text": "Я долго переживаю после случившегося конфуза",
+      "subscale": "neuro",
+      "reverse": false
+    },
+    {
+      "n": 15,
+      "text": "Я легко вношу оживление в скучную компанию",
+      "subscale": "extra",
+      "reverse": false
+    },
+    {
+      "n": 16,
+      "text": "Мне безразличен вид страдающего животного",
+      "subscale": "psych",
+      "reverse": false
+    },
+    {
+      "n": 17,
+      "text": "Меня беспокоят мои нервы",
+      "subscale": "neuro",
+      "reverse": false
+    },
+    {
+      "n": 18,
+      "text": "Я часто испытываю чувство одиночества",
+      "subscale": "neuro",
+      "reverse": false
+    },
+    {
+      "n": 19,
+      "text": "Мне безразличен вид животного в капкане",
+      "subscale": "psych",
+      "reverse": false
+    },
+    {
+      "n": 20,
+      "text": "Мне нравится находиться среди людей",
+      "subscale": "extra",
+      "reverse": false
+    },
+    {
+      "n": 21,
+      "text": "Я бы принял лекарство с опасными побочными явлениями",
+      "subscale": "psych",
+      "reverse": false
+    }
+  ],
+  "levels": [
+    {
+      "upto": 0.4,
+      "name": "низкий",
+      "text": "Низкий уровень показателя"
+    },
+    {
+      "upto": 0.7,
+      "name": "средний",
+      "text": "Средний уровень показателя"
+    },
+    {
+      "upto": 1.0,
+      "name": "высокий",
+      "text": "Высокий уровень показателя"
+    }
+  ]
+}

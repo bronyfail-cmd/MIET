@@ -1,0 +1,100 @@
+{
+  "id": "information_processing",
+  "title": "Критическое мышление: работа с информацией",
+  "kind": "scale",
+  "demo": false,
+  "scale": {
+    "min": 1,
+    "max": 4,
+    "labels": {
+      "1": "плохо",
+      "2": "удовлетворительно",
+      "3": "хорошо",
+      "4": "отлично"
+    }
+  },
+  "subscales": {
+    "info_work": "Работа с информацией",
+    "arguments": "Подбор аргументов",
+    "conclusions": "Формулировка выводов"
+  },
+  "questions": [
+    {
+      "n": 1,
+      "text": "Оценивать актуальность информации",
+      "subscale": "info_work",
+      "reverse": false
+    },
+    {
+      "n": 2,
+      "text": "Оценивать достоверность информации",
+      "subscale": "info_work",
+      "reverse": false
+    },
+    {
+      "n": 3,
+      "text": "Определять информацию, которую возможно использовать как аргумент",
+      "subscale": "arguments",
+      "reverse": false
+    },
+    {
+      "n": 4,
+      "text": "Относить аргументы к различным контекстам",
+      "subscale": "arguments",
+      "reverse": false
+    },
+    {
+      "n": 5,
+      "text": "Оценивать убедительность аргумента",
+      "subscale": "arguments",
+      "reverse": false
+    },
+    {
+      "n": 6,
+      "text": "Определять недостаточность информации в аргументации",
+      "subscale": "arguments",
+      "reverse": false
+    },
+    {
+      "n": 7,
+      "text": "На основе представленной информации для аргументации выносить чёткое суждение",
+      "subscale": "conclusions",
+      "reverse": false
+    },
+    {
+      "n": 8,
+      "text": "Разрабатывать валидные выводы",
+      "subscale": "conclusions",
+      "reverse": false
+    },
+    {
+      "n": 9,
+      "text": "Оценивать причинно-следственные связи",
+      "subscale": "conclusions",
+      "reverse": false
+    },
+    {
+      "n": 10,
+      "text": "Создавать объяснения (отвечать на вопрос почему)",
+      "subscale": "conclusions",
+      "reverse": false
+    }
+  ],
+  "levels": [
+    {
+      "upto": 0.4,
+      "name": "низкий",
+      "text": "Низкий уровень показателя"
+    },
+    {
+      "upto": 0.7,
+      "name": "средний",
+      "text": "Средний уровень показателя"
+    },
+    {
+      "upto": 1.0,
+      "name": "высокий",
+      "text": "Высокий уровень показателя"
+    }
+  ]
+}
