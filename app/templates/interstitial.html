@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Продолжение тестирования{% endblock %}
+{% block content %}
+<section class="card">
+  <h1>Текущий блок завершен</h1>
+  <p>Вы ответили на все вопросы текущего блока. Сделайте паузу и продолжите, когда будете готовы.</p>
+  <form method="post">
+    <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+    <button class="btn" type="submit">Продолжить тестирование</button>
+  </form>
+</section>
+{% endblock %}

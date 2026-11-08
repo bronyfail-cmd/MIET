@@ -1,37 +1,11 @@
 {% extends "base.html" %}
-{% block title %}Результаты{% endblock %}
+{% block title %}Завершение{% endblock %}
 {% block content %}
 <section class="card">
-  <h1>Портрет личности</h1>
-  <p>{{ portrait.person.name }}{% if portrait.person.group %}, {{ portrait.person.group }}{% endif %}
-     · {{ attempt['finished_at'] }}</p>
-  <p class="muted">Методик: {{ portrait.summary.expected }}, готово: {{ portrait.summary.ok }},
-     неполных: {{ portrait.summary.incomplete }}{% if portrait.summary.missing %}, без результата: {{ portrait.summary.missing|length }}{% endif %}</p>
-  <p>
-    <a class="btn ghost" href="{{ url_for('web.export_json', attempt_id=attempt['id']) }}">Скачать JSON</a>
-    <a class="btn ghost" href="{{ url_for('web.export_csv', attempt_id=attempt['id']) }}">Скачать CSV</a>
-  </p>
+  <h1>Спасибо за тестирование</h1>
+  <p>Ваши ответы сохранены и переданы преподавателю для обработки.</p>
+  <p class="muted">Окно можно закрыть или вернуться в личный кабинет.</p>
+  <br>
+  <a class="btn" href="{{ url_for('web.cabinet') }}">Вернуться в личный кабинет</a>
 </section>
-{% for s in portrait.sections %}
-<section class="card">
-  {% if s.status in ('ok', 'incomplete') %}
-    <h2>{{ s.title }} <span class="badge lvl-{{ loop.index0 % 3 }}">{{ s.level }}</span>
-        {% if s.status == 'incomplete' %}<span class="badge warn">неполный</span>{% endif %}</h2>
-    <div class="progress"><div style="width: {{ (s.percent * 100)|round|int }}%"></div></div>
-    <p>{{ s.score|round(1) }} из {{ s.max_score|round(1) }} ({{ (s.percent * 100)|round|int }}%)</p>
-    <p>{{ s.interpretation }}</p>
-    {% if s.subscales %}
-    <table>
-      {% for name, v in s.subscales.items() %}
-      <tr><td>{{ name }}</td><td>{{ v.score|round(1) }} / {{ v.max|round(1) }}</td><td>{{ (v.percent * 100)|round|int }}%</td></tr>
-      {% endfor %}
-    </table>
-    {% endif %}
-    {% if s.skipped %}<p class="muted">Пропущено вопросов: {{ s.skipped|length }}</p>{% endif %}
-  {% else %}
-    <h2>{{ s.method_id }}</h2>
-    <p class="flash error">Результат недоступен ({{ s.status }}). Обратитесь к преподавателю.</p>
-  {% endif %}
-</section>
-{% endfor %}
 {% endblock %}
