@@ -75,6 +75,12 @@ class Survey:
         self.answers[qid] = None
 
     # ---------- итоги ----------
+    def is_last_in_method(self):
+        """True, если следующий вопрос из другой методики или поток кончился."""
+        if self.position >= len(self.flow) - 1:
+            return True
+        return self.flow[self.position]["method_id"] != self.flow[self.position + 1]["method_id"]
+
     def progress(self):
         done = sum(1 for q in self.flow if q["id"] in self.answers)
         return {"done": done, "total": self.total,

@@ -158,10 +158,29 @@ def survey_start():
         "SELECT id FROM attempts WHERE user_id = ? AND status = 'in_progress' ORDER BY id DESC LIMIT 1",
         (g.user["id"],)).fetchone()
     if open_attempt:
-        return redirect(url_for("web.survey", attempt_id=open_attempt["id"]))
+        return render_template("instruction.html", attempt_id=open_attempt["id"])
     cur = db.execute("INSERT INTO attempts (user_id) VALUES (?)", (g.user["id"],))
     db.commit()
-    return redirect(url_for("web.survey", attempt_id=cur.lastrowid))
+    return render_template("instruction.html", attempt_id=cur.lastrowid)
+
+
+@bp.route("/survey/<int:attempt_id>/continue", methods=("GET", "POST"))
+@login_required
+def interstitial(attempt_id):
+    attempt = get_attempt(attempt_id)
+    if attempt["user_id"] != g.user["id"]:
+        abort(403)
+    if attempt["status"] == "finished":
+        return redirect(url_for("web.result", attempt_id=attempt_id))
+    if request.method == "POST":
+        sv = load_survey(attempt)
+        sv.next()
+        db = get_db()
+        db.execute("UPDATE attempts SET position = ? WHERE id = ?",
+                   (sv.position, attempt_id))
+        db.commit()
+        return redirect(url_for("web.survey", attempt_id=attempt_id))
+    return render_template("interstitial.html", attempt_id=attempt_id)
 
 
 # ---------- прохождение опроса ----------
@@ -183,14 +202,11 @@ def survey(attempt_id):
         qid = request.form.get("question_id", "")
         raw = request.form.get("value", "")
         try:
-            if action == "skip":
-                sv.skip(qid)
-                save_answer(attempt_id, sv, qid, None)
-            elif action in ("next", "finish") and raw != "":
+            if action in ("next", "finish") and raw != "":
                 sv.answer(qid, int(raw))
                 save_answer(attempt_id, sv, qid, int(raw))
             elif action in ("next", "finish") and raw == "" and qid not in sv.answers:
-                flash("Выберите ответ или нажмите «Пропустить».", "error")
+                flash("Выберите один из вариантов ответа.", "error")
                 return redirect(url_for("web.survey", attempt_id=attempt_id))
         except (ValueError, KeyError):
             flash("Некорректный ответ.", "error")
@@ -200,7 +216,13 @@ def survey(attempt_id):
             sv.prev()
         elif action == "finish":
             return finish_attempt(attempt, sv)
-        elif action in ("next", "skip"):
+        elif action == "next":
+            if sv.is_last_in_method() and not sv.is_last():
+                db = get_db()
+                db.execute("UPDATE attempts SET position = ? WHERE id = ?",
+                           (sv.position, attempt_id))
+                db.commit()
+                return redirect(url_for("web.interstitial", attempt_id=attempt_id))
             sv.next()
         db = get_db()
         db.execute("UPDATE attempts SET position = ? WHERE id = ?", (sv.position, attempt_id))
@@ -208,8 +230,7 @@ def survey(attempt_id):
         return redirect(url_for("web.survey", attempt_id=attempt_id))
 
     question = sv.current()
-    method = current_app.methods[question["method_id"]]
-    return render_template("survey.html", attempt=attempt, q=question, method=method,
+    return render_template("survey.html", attempt=attempt, q=question,
                            current_answer=sv.answers.get(question["id"]),
                            progress=sv.progress(), is_last=sv.is_last(),
                            position=sv.position, total=sv.total, block_errors=sv.errors)
