@@ -25,6 +25,7 @@
     <label>По <input type="date" name="date_to" value="{{ args.get('date_to', '') }}"></label>
     <button class="btn">Применить</button>
     <a class="btn ghost" href="{{ url_for('web.admin_export', **args) }}">Экспорт CSV</a>
+    <a class="btn ghost" href="{{ url_for('web.admin_export_matrix', **args) }}">Матрица SPSS</a>
   </form>
   <p class="muted">Найдено строк: {{ rows|length }}</p>
   <table>

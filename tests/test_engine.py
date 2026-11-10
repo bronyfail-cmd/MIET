@@ -48,7 +48,7 @@ def test_skipped_and_unvisited_are_none_in_groups(methods):
         pytest.skip("нужно минимум три вопроса")
     s = Survey(methods, [mid])
     s.answer(qs[0]["id"], qs[0]["options"][0]["value"])
-    s.skip(qs[1]["id"])
+    s.answer(qs[1]["id"], None)
     grouped = s.grouped_answers()[mid]
     assert grouped[qs[0]["id"]] == qs[0]["options"][0]["value"]
     assert grouped[qs[1]["id"]] is None

@@ -16,7 +16,6 @@
     </div>
     <div class="actions">
       <button class="btn ghost" name="action" value="prev" formnovalidate {% if position == 0 %}disabled{% endif %}>Назад</button>
-      <button class="btn ghost" name="action" value="skip">Пропустить</button>
       {% if is_last %}
         <button class="btn" name="action" value="finish">Завершить</button>
       {% else %}

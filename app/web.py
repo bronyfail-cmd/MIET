@@ -231,21 +231,6 @@ def survey(attempt_id):
             flash("Некорректный ответ.", "error")
             return redirect(url_for("web.survey", attempt_id=attempt_id))
 
-        if action == "skip":
-            sv.skip(qid)
-            save_answer(attempt_id, sv, qid, None)
-            if sv.is_last_in_method() and not sv.is_last():
-                db = get_db()
-                db.execute("UPDATE attempts SET position = ? WHERE id = ?",
-                           (sv.position, attempt_id))
-                db.commit()
-                return redirect(url_for("web.interstitial", attempt_id=attempt_id))
-            sv.next()
-            db = get_db()
-            db.execute("UPDATE attempts SET position = ? WHERE id = ?", (sv.position, attempt_id))
-            db.commit()
-            return redirect(url_for("web.survey", attempt_id=attempt_id))
-
         if action == "prev":
             sv.prev()
         elif action == "finish":
@@ -388,6 +373,56 @@ def admin_export():
         rows_to_csv(data, ["Попытка", "ФИО", "Группа", "Завершено", "Методика", "Балл", "Максимум", "Уровень", "Статус"]),
         mimetype="text/csv; charset=utf-8",
         headers={"Content-Disposition": "attachment; filename=results.csv"})
+
+
+@bp.route("/admin/export_matrix.csv")
+@teacher_required
+def admin_export_matrix():
+    """Экспорт матрицы всех результатов для SPSS: строки=испытуемые, столбцы=шкалы."""
+    rows = filtered_results(request.args)
+    # Собираем уникальные шкалы
+    scales = []
+    for r in rows:
+        attempt = get_db().execute(
+            "SELECT portrait FROM attempts WHERE id = ?", (r["attempt_id"],)).fetchone()
+        if attempt and attempt["portrait"]:
+            portrait = json.loads(attempt["portrait"])
+            for section in portrait.get("sections", []):
+                for sub_name in section.get("subscales", {}).keys():
+                    scale_key = f"{section['method_id']}_{sub_name}"
+                    if scale_key not in scales:
+                        scales.append(scale_key)
+    
+    # Заголовок
+    header = ["attempt_id", "ФИО", "Группа", "Завершено"] + scales
+    # Данные
+    data = []
+    seen_attempts = set()
+    for r in rows:
+        if r["attempt_id"] in seen_attempts:
+            continue
+        seen_attempts.add(r["attempt_id"])
+        
+        attempt = get_db().execute(
+            "SELECT portrait FROM attempts WHERE id = ?", (r["attempt_id"],)).fetchone()
+        row = [r["attempt_id"], r["full_name"], r["study_group"], r["finished_at"]]
+        
+        scale_values = {s: "" for s in scales}
+        if attempt and attempt["portrait"]:
+            portrait = json.loads(attempt["portrait"])
+            for section in portrait.get("sections", []):
+                for sub_name, sub_data in section.get("subscales", {}).items():
+                    scale_key = f"{section['method_id']}_{sub_name}"
+                    if scale_key in scale_values:
+                        scale_values[scale_key] = sub_data.get("score", "")
+        
+        row += [scale_values[s] for s in scales]
+        data.append(row)
+    
+    return Response(
+        rows_to_csv(data, header),
+        mimetype="text/csv; charset=utf-8",
+        headers={"Content-Disposition": "attachment; filename=matrix_spss.csv"})
 
 
 @bp.route("/admin/validate")

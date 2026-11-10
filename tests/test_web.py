@@ -67,17 +67,6 @@ def test_full_pass_creates_result(client, app):
     assert csv_data.count("\n") >= len(app.methods) + 1
 
 
-def test_skip_and_back_and_resume(client, app):
-    register_and_login(client)
-    client.post("/survey/start")
-    first = next(iter(app.methods.values())).questions()[0]
-    client.post("/survey/1", data={"_csrf": "x", "question_id": first["id"], "action": "skip", "value": ""}, follow_redirects=True)
-    page = client.get("/survey/1")
-    assert "Вопрос 2 из".encode() in page.data
-    client.post("/survey/1", data={"_csrf": "x", "question_id": "x", "action": "prev"}, follow_redirects=True)
-    assert "Вопрос 1 из".encode() in client.get("/survey/1").data
-
-
 def test_next_without_answer_is_rejected(client, app):
     register_and_login(client)
     client.post("/survey/start")
@@ -94,18 +83,6 @@ def test_invalid_answer_rejected(client, app):
     assert "Некорректный".encode() in r.data
     r = client.post("/survey/1", data={"question_id": q["id"], "value": "abc", "action": "next"})
     assert r.status_code in (302, 500) and r.status_code != 500
-
-
-def test_finish_with_everything_skipped(client, app):
-    register_and_login(client)
-    client.post("/survey/start")
-    from app.engine import Survey
-    flow = Survey(app.methods, list(app.methods)).flow
-    for q in flow:
-        client.post("/survey/1", data={"_csrf": "x", "question_id": q["id"], "action": "skip", "value": ""}, follow_redirects=True)
-    client.post("/survey/1", data={"_csrf": "x", "question_id": flow[-1]["id"], "action": "finish", "value": ""}, follow_redirects=True)
-    r = client.get("/result/1")
-    assert r.status_code == 200 and "incomplete".encode() in r.data
 
 
 def test_users_cannot_see_each_other(client, app):

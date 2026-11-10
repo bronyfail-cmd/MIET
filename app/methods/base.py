@@ -15,6 +15,7 @@ questions() / score(), а логику ключей и интерпретаци�
      "answered": int, "skipped": [question_id, ...], "status": "ok" | "incomplete"}
 """
 import json
+import re
 from pathlib import Path
 
 DATA_DIR = Path(__file__).parent / "data"
@@ -54,10 +55,16 @@ class Methodology:
             out = []
             for i, opt in enumerate(item["options"]):
                 if isinstance(opt, dict):
-                    out.append({"value": opt.get("value", i),
-                                "label": str(opt.get("label", ""))})
+                    value = opt.get("value", i)
+                    label = str(opt.get("label", ""))
                 else:
-                    out.append({"value": i, "label": str(opt)})
+                    value = i
+                    label = str(opt)
+                # Убираем баллы типа "(-3)", "(-2)" из label
+                label = re.sub(r'\s*\(-?\d+\)\s*', ' ', label).strip()
+                # Добавляем нумерацию: "1) Вариант"
+                label = f"{i+1}) {label}"
+                out.append({"value": value, "label": label})
             return out
         lo, hi = self._scale["min"], self._scale["max"]
         disp = self._scale.get("display_labels", {})
@@ -65,7 +72,7 @@ class Methodology:
         out = []
         for v in range(lo, hi + 1):
             lab = disp.get(str(v)) or labels.get(str(v), str(v))
-            if str(lab).isdigit():
+            if str(lab).isdigit() or (str(lab).startswith('-') and str(lab)[1:].isdigit()):
                 lab = str(v)
             out.append({"value": v, "label": lab})
         return out
