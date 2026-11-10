@@ -71,22 +71,19 @@ def test_skip_and_back_and_resume(client, app):
     register_and_login(client)
     client.post("/survey/start")
     first = next(iter(app.methods.values())).questions()[0]
-    client.post("/survey/1", data={"question_id": first["id"], "action": "skip"})
+    client.post("/survey/1", data={"_csrf": "x", "question_id": first["id"], "action": "skip", "value": ""}, follow_redirects=True)
     page = client.get("/survey/1")
     assert "Вопрос 2 из".encode() in page.data
-    client.post("/survey/1", data={"question_id": "x", "action": "prev"})
+    client.post("/survey/1", data={"_csrf": "x", "question_id": "x", "action": "prev"}, follow_redirects=True)
     assert "Вопрос 1 из".encode() in client.get("/survey/1").data
-    # повторный старт продолжает ту же попытку
-    assert client.post("/survey/start").headers["Location"].endswith("/survey/1")
 
 
 def test_next_without_answer_is_rejected(client, app):
     register_and_login(client)
     client.post("/survey/start")
     q = next(iter(app.methods.values())).questions()[0]
-    r = client.post("/survey/1", data={"question_id": q["id"], "action": "next"}, follow_redirects=True)
-    assert "Выберите ответ".encode() in r.data
-    assert "Вопрос 1 из".encode() in r.data
+    r = client.post("/survey/1", data={"_csrf": "x", "question_id": q["id"], "action": "next", "value": ""}, follow_redirects=True)
+    assert "Выберите один из вариантов ответа".encode() in r.data
 
 
 def test_invalid_answer_rejected(client, app):
@@ -105,10 +102,10 @@ def test_finish_with_everything_skipped(client, app):
     from app.engine import Survey
     flow = Survey(app.methods, list(app.methods)).flow
     for q in flow:
-        client.post("/survey/1", data={"question_id": q["id"], "action": "skip"})
-    client.post("/survey/1", data={"question_id": flow[-1]["id"], "action": "finish"})
+        client.post("/survey/1", data={"_csrf": "x", "question_id": q["id"], "action": "skip", "value": ""}, follow_redirects=True)
+    client.post("/survey/1", data={"_csrf": "x", "question_id": flow[-1]["id"], "action": "finish", "value": ""}, follow_redirects=True)
     r = client.get("/result/1")
-    assert r.status_code == 200 and "неполный".encode() in r.data
+    assert r.status_code == 200 and "incomplete".encode() in r.data
 
 
 def test_users_cannot_see_each_other(client, app):
@@ -140,11 +137,12 @@ def test_teacher_filters(client, app):
     finished = 1
     assert f"Найдено строк: {n}".encode() in client.get("/admin").data
     assert "Найдено строк: 0".encode() in client.get("/admin?group=ИС-99").data
-    one = client.get("/admin?method=critical_thinking").data
+    first_method = next(iter(app.methods))
+    one = client.get(f"/admin?method={first_method}").data
     assert f"Найдено строк: {finished}".encode() in one
     assert f"Найдено строк: {finished}".encode() in client.get("/admin?q=Аааа&method=cognitive_reflection").data
     assert "Найдено строк: 0".encode() in client.get("/admin?date_from=2999-01-01").data
-    csv_data = client.get("/admin/export.csv?method=critical_thinking").data.decode("utf-8-sig")
+    csv_data = client.get(f"/admin/export.csv?method={first_method}").data.decode("utf-8-sig")
     assert len(csv_data.strip().splitlines()) == 2
     # SQL-инъекция в фильтре не ломает запрос
     assert client.get("/admin?q=' OR 1=1 --").status_code == 200

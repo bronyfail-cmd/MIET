@@ -231,6 +231,21 @@ def survey(attempt_id):
             flash("Некорректный ответ.", "error")
             return redirect(url_for("web.survey", attempt_id=attempt_id))
 
+        if action == "skip":
+            sv.skip(qid)
+            save_answer(attempt_id, sv, qid, None)
+            if sv.is_last_in_method() and not sv.is_last():
+                db = get_db()
+                db.execute("UPDATE attempts SET position = ? WHERE id = ?",
+                           (sv.position, attempt_id))
+                db.commit()
+                return redirect(url_for("web.interstitial", attempt_id=attempt_id))
+            sv.next()
+            db = get_db()
+            db.execute("UPDATE attempts SET position = ? WHERE id = ?", (sv.position, attempt_id))
+            db.commit()
+            return redirect(url_for("web.survey", attempt_id=attempt_id))
+
         if action == "prev":
             sv.prev()
         elif action == "finish":
