@@ -85,6 +85,16 @@ def test_invalid_answer_rejected(client, app):
     assert r.status_code in (302, 500) and r.status_code != 500
 
 
+def test_finish_with_everything_skipped(client, app):
+    """При завершении без ответов результат помечается как incomplete."""
+    register_and_login(client)
+    client.post("/survey/start")
+    # Просто завершаем без ответов на все вопросы
+    client.post("/survey/1", data={"_csrf": "x", "action": "finish"}, follow_redirects=True)
+    r = client.get("/result/1")
+    assert r.status_code == 200 and "incomplete".encode() in r.data
+
+
 def test_users_cannot_see_each_other(client, app):
     register_and_login(client)
     aid = complete_survey(client, app)

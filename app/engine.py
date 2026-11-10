@@ -65,9 +65,6 @@ class Survey:
     def answer(self, qid, value):
         """Принять ответ. Значение проверяется по вариантам вопроса."""
         question = self._find(qid)
-        if value is None:
-            self.answers[qid] = None
-            return
         allowed = {o["value"] for o in question["options"]}
         if value not in allowed:
             raise ValueError(f"недопустимый ответ {value!r} на вопрос {qid}")
