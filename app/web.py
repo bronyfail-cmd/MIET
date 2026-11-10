@@ -14,7 +14,7 @@ from .engine import Survey
 from .validator import validate
 
 NAME_RE  = re.compile(r"^[А-Яа-яЁёA-Za-z]+(?:[ -][А-Яа-яЁёA-Za-z]+)+$")
-GROUP_RE = re.compile(r"^[А-ЯA-Za-z0-9]+(?:-[А-ЯA-Za-z0-9]+)*$")
+GROUP_RE = re.compile(r"^[А-Яа-яЁёA-Za-z0-9][^,;]*$")
 
 bp = Blueprint("web", __name__)
 
@@ -117,7 +117,7 @@ def register():
         elif not NAME_RE.match(name):
             error = "ФИО: минимум два слова, только буквы."
         elif group and not GROUP_RE.match(group):
-            error = "Группа: буквы/цифры/дефис, например ИС-25-21С."
+            error = "Группа: начните с буквы или цифры, без запятых и точек с запятой."
         elif len(password) < 6:
             error = "Пароль должен быть не короче 6 символов."
         if error is None:
