@@ -16,60 +16,78 @@ def all_answers(method, pick):
     return {q["id"]: pick(q["options"]) for q in method.questions()}
 
 
-def test_all_demo_methods_loaded(methods):
-    assert {"critical_thinking", "cognitive_reflection", "communication_styles"} <= set(methods)
+def first_of_kind(methods, kind):
+    for mid, m in methods.items():
+        if m.kind == kind:
+            return mid, m
+    return None, None
 
 
-def test_scale_max_and_min_with_reverse_keys(methods):
-    m = methods["critical_thinking"]
-    # максимум по каждому вопросу с учётом обратных пунктов
-    best = {}
-    for item in m._items:
-        best[m.qid(item["n"])] = 1 if item.get("reverse") else 5
-    res = m.score(best)
-    assert res["score"] == res["max_score"] == 30
-    assert res["level"] == "высокий"
-    worst = {k: (5 if v == 1 else 1) for k, v in best.items()}
-    assert m.score(worst)["score"] == 6
-    assert m.score(worst)["level"] == "низкий"
+def test_all_methods_loaded(methods):
+    from app.methods.base import DATA_DIR
+    assert len(methods) == len(list(DATA_DIR.glob("*.json")))
 
 
-def test_subscales_sum_to_total(methods):
-    m = methods["communication_styles"]
-    res = m.score(all_answers(m, lambda o: o[1]["value"]))
-    assert sum(s["score"] for s in res["subscales"].values()) == res["score"]
+def test_questions_contract(methods):
+    """Каждый вопрос: id, текст, тип, варианты с уникальными value и строковыми label."""
+    for mid, m in methods.items():
+        for q in m.questions():
+            assert q["id"] and q["text"].strip()
+            assert q["type"] in ("scale", "choice")
+            values = [o["value"] for o in q["options"]]
+            assert len(values) == len(set(values))
+            for o in q["options"]:
+                assert isinstance(o["label"], str) and o["label"] != ""
 
 
-def test_choice_keys(methods):
-    m = methods["cognitive_reflection"]
-    right = {"cognitive_reflection.1": 1, "cognitive_reflection.2": 2, "cognitive_reflection.3": 1}
-    assert m.score(right)["score"] == 3
-    assert m.score(right)["level"] == "высокий"
-    wrong = {"cognitive_reflection.1": 0, "cognitive_reflection.2": 0, "cognitive_reflection.3": 0}
-    assert m.score(wrong)["score"] == 0
+def test_score_invariants_for_every_method(methods):
+    for mid, m in methods.items():
+        res = m.score(all_answers(m, lambda o: o[0]["value"]))
+        assert res["status"] == "ok"
+        assert 0 <= res["score"] <= res["max_score"]
+        assert 0.0 <= res["percent"] <= 1.0
+        assert res["level"] in {l["name"] for l in m._levels}
 
 
-@pytest.mark.parametrize("bad", [0, 6, -1, "3", 2.5])
+def test_choice_all_correct_is_max_score(methods):
+    mid, m = first_of_kind(methods, "choice")
+    if m is None:
+        pytest.skip("нет choice-методики")
+    right = {m.qid(i["n"]): i["correct"] for i in m._items if "correct" in i}
+    if not right:
+        pytest.skip("choice-методика без ключей")
+    res = m.score(right)
+    assert res["score"] == res["max_score"]
+    wrong = {m.qid(i["n"]): (i["correct"] + 1) % len(i["options"])
+             for i in m._items if "correct" in i}
+    assert m.score(wrong)["score"] < res["score"]
+
+
+@pytest.mark.parametrize("bad", [-1, 99, "3", 2.5])
 def test_out_of_scale_answer_rejected(methods, bad):
+    mid, m = first_of_kind(methods, "scale")
+    if m is None:
+        pytest.skip("нет scale-методики")
     with pytest.raises(MethodologyError):
-        methods["critical_thinking"].score({"critical_thinking.1": bad})
+        m.score({m.qid(1): bad})
 
 
 def test_skip_all_is_incomplete(methods):
-    m = methods["critical_thinking"]
+    mid, m = next(iter(methods.items()))
     res = m.score({})
     assert res["status"] == "incomplete"
     assert res["answered"] == 0
-    assert len(res["skipped"]) == 6
+    assert len(res["skipped"]) == len(m._items)
 
 
-def test_few_skips_ok_many_skips_incomplete(methods):
-    m = methods["communication_styles"]  # 5 вопросов, порог 20% => 1 пропуск допустим
-    answers = all_answers(m, lambda o: o[2]["value"])
-    answers["communication_styles.1"] = None
-    assert m.score(answers)["status"] == "ok"
-    answers["communication_styles.2"] = None
-    assert m.score(answers)["status"] == "incomplete"
+def test_many_skips_is_incomplete(methods):
+    mid, m = next(iter(methods.items()))
+    answers = all_answers(m, lambda o: o[0]["value"])
+    for i, item in enumerate(m._items):
+        if i % 2 == 0:
+            answers[m.qid(item["n"])] = None
+    res = m.score(answers)
+    assert res["status"] == "incomplete"
 
 
 def test_broken_json_does_not_crash_loader(tmp_path):

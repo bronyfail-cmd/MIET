@@ -2,6 +2,7 @@ import csv
 import functools
 import io
 import json
+import re
 
 from flask import (Blueprint, Response, abort, current_app, flash, g, jsonify,
                    redirect, render_template, request, session, url_for)
@@ -12,7 +13,18 @@ from .db import get_db
 from .engine import Survey
 from .validator import validate
 
+NAME_RE  = re.compile(r"^[А-ЯЁA-Z][а-яёa-z]+(?:[ -][А-ЯЁA-Za-z][а-яёa-z]+)+$")
+GROUP_RE = re.compile(r"^[А-ЯA-Za-z0-9]+(?:-[А-ЯA-Za-z0-9]+)*$")
+
 bp = Blueprint("web", __name__)
+
+
+@bp.app_template_filter()
+def num(value):
+    if value is None:
+        return ""
+    f = float(value)
+    return str(int(f)) if f == int(f) else f"{f:.1f}"
 
 
 # ---------- вспомогательное ----------
@@ -102,6 +114,10 @@ def register():
             error = "Введите корректный e-mail."
         elif len(name) < 3:
             error = "Введите ФИО."
+        elif not NAME_RE.match(name):
+            error = "ФИО: минимум два слова, только буквы."
+        elif group and not GROUP_RE.match(group):
+            error = "Группа: буквы/цифры/дефис, например ИС-25-21С."
         elif len(password) < 6:
             error = "Пароль должен быть не короче 6 символов."
         if error is None:
@@ -174,11 +190,14 @@ def interstitial(attempt_id):
         return redirect(url_for("web.result", attempt_id=attempt_id))
     if request.method == "POST":
         sv = load_survey(attempt)
-        sv.next()
-        db = get_db()
-        db.execute("UPDATE attempts SET position = ? WHERE id = ?",
-                   (sv.position, attempt_id))
-        db.commit()
+        q = sv.current()
+        if (q is not None and not sv.is_last()
+                and sv.is_last_in_method() and q["id"] in sv.answers):
+            sv.next()
+            db = get_db()
+            db.execute("UPDATE attempts SET position = ? WHERE id = ?",
+                       (sv.position, attempt_id))
+            db.commit()
         return redirect(url_for("web.survey", attempt_id=attempt_id))
     return render_template("interstitial.html", attempt_id=attempt_id)
 
@@ -210,6 +229,21 @@ def survey(attempt_id):
                 return redirect(url_for("web.survey", attempt_id=attempt_id))
         except (ValueError, KeyError):
             flash("Некорректный ответ.", "error")
+            return redirect(url_for("web.survey", attempt_id=attempt_id))
+
+        if action == "skip":
+            sv.skip(qid)
+            save_answer(attempt_id, sv, qid, None)
+            if sv.is_last_in_method() and not sv.is_last():
+                db = get_db()
+                db.execute("UPDATE attempts SET position = ? WHERE id = ?",
+                           (sv.position, attempt_id))
+                db.commit()
+                return redirect(url_for("web.interstitial", attempt_id=attempt_id))
+            sv.next()
+            db = get_db()
+            db.execute("UPDATE attempts SET position = ? WHERE id = ?", (sv.position, attempt_id))
+            db.commit()
             return redirect(url_for("web.survey", attempt_id=attempt_id))
 
         if action == "prev":
