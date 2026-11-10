@@ -13,7 +13,7 @@ from .db import get_db
 from .engine import Survey
 from .validator import validate
 
-NAME_RE  = re.compile(r"^[А-ЯЁA-Z][а-яёa-z]+(?:[ -][А-ЯЁA-Za-z][а-яёa-z]+)+$")
+NAME_RE  = re.compile(r"^[А-Яа-яЁёA-Za-z]+(?:[ -][А-Яа-яЁёA-Za-z]+)+$")
 GROUP_RE = re.compile(r"^[А-ЯA-Za-z0-9]+(?:-[А-ЯA-Za-z0-9]+)*$")
 
 bp = Blueprint("web", __name__)
