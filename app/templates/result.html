@@ -1,11 +1,17 @@
 {% extends "base.html" %}
-{% block title %}Завершение{% endblock %}
+{% block title %}Портрет личности{% endblock %}
 {% block content %}
 <section class="card">
-  <h1>Спасибо за тестирование</h1>
-  <p>Ваши ответы сохранены и переданы преподавателю для обработки.</p>
-  <p class="muted">Окно можно закрыть или вернуться в личный кабинет.</p>
-  <br>
-  <a class="btn" href="{{ url_for('web.cabinet') }}">Вернуться в личный кабинет</a>
+  <h1>Портрет личности — {{ portrait.person.name }}</h1>
+  <p class="muted">Группа {{ portrait.person.group }}</p>
+  {% for s in portrait.sections %}
+    <h2>{{ s.title or s.method_id }} · {{ s.status }}</h2>
+    {% if s.status in ('ok', 'incomplete') %}
+      <p>Балл: {{ s.score|num }} / {{ s.max_score|num }} · уровень: {{ s.level }}</p>
+      <p>{{ s.interpretation }}</p>
+    {% endif %}
+  {% endfor %}
+  <a class="btn ghost" href="{{ url_for('web.export_json', attempt_id=attempt.id) }}">JSON</a>
+  <a class="btn ghost" href="{{ url_for('web.export_csv', attempt_id=attempt.id) }}">CSV</a>
 </section>
 {% endblock %}

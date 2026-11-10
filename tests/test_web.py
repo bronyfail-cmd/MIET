@@ -1,19 +1,34 @@
 import json
+import re
 
 from conftest import register_and_login
 from app.db import get_db
 from werkzeug.security import generate_password_hash
 
 
-def complete_survey(client, app, answer_for=lambda q: q["options"][-1]["value"]):
-    client.post("/survey/start")
-    attempt_id = 1
-    from app.engine import Survey
-    flow = Survey(app.methods, list(app.methods)).flow
-    for i, q in enumerate(flow):
-        action = "finish" if i == len(flow) - 1 else "next"
-        client.post(f"/survey/{attempt_id}", data={"question_id": q["id"], "value": answer_for(q), "action": action})
-    return attempt_id
+def complete_survey(client, app, answer_for=None):
+    html = client.post("/survey/start").get_data(as_text=True)
+    aid = int(re.search(r'href="/survey/(\d+)"', html).group(1))
+    while True:
+        rv = client.get(f"/survey/{aid}")
+        if rv.status_code == 302:
+            break
+        html = rv.get_data(as_text=True)
+        csrf = re.search(r'name="_csrf" value="([^"]+)"', html).group(1)
+        qid = re.search(r'name="question_id" value="([^"]+)"', html).group(1)
+        opts = [int(v) for v in re.findall(r'name="value" value="(-?\d+)"', html)]
+        q = {"options": [{"value": v} for v in opts]}
+        value = answer_for(q) if answer_for else opts[0]
+        action = "finish" if 'value="finish"' in html else "next"
+        rv = client.post(f"/survey/{aid}",
+                         data={"_csrf": csrf, "question_id": qid,
+                               "value": value, "action": action},
+                         follow_redirects=False)
+        if "/continue" in rv.headers.get("Location", ""):
+            page = client.get(f"/survey/{aid}/continue").get_data(as_text=True)
+            csrf2 = re.search(r'name="_csrf" value="([^"]+)"', page).group(1)
+            client.post(f"/survey/{aid}/continue", data={"_csrf": csrf2})
+    return aid
 
 
 def test_requires_login(client):
@@ -122,11 +137,12 @@ def test_teacher_filters(client, app):
     client.post("/login", data={"email": "t@example.com", "password": "teachpass"})
 
     n = len(app.methods)
+    finished = 1
     assert f"Найдено строк: {n}".encode() in client.get("/admin").data
     assert "Найдено строк: 0".encode() in client.get("/admin?group=ИС-99").data
     one = client.get("/admin?method=critical_thinking").data
-    assert "Найдено строк: 1".encode() in one
-    assert "Найдено строк: 1".encode() in client.get("/admin?q=Аааа&method=cognitive_reflection").data
+    assert f"Найдено строк: {finished}".encode() in one
+    assert f"Найдено строк: {finished}".encode() in client.get("/admin?q=Аааа&method=cognitive_reflection").data
     assert "Найдено строк: 0".encode() in client.get("/admin?date_from=2999-01-01").data
     csv_data = client.get("/admin/export.csv?method=critical_thinking").data.decode("utf-8-sig")
     assert len(csv_data.strip().splitlines()) == 2

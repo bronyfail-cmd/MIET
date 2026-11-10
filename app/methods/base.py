@@ -51,10 +51,24 @@ class Methodology:
 
     def options_for(self, item):
         if self.kind == "choice":
-            return [{"value": i, "label": text} for i, text in enumerate(item["options"])]
+            out = []
+            for i, opt in enumerate(item["options"]):
+                if isinstance(opt, dict):
+                    out.append({"value": opt.get("value", i),
+                                "label": str(opt.get("label", ""))})
+                else:
+                    out.append({"value": i, "label": str(opt)})
+            return out
         lo, hi = self._scale["min"], self._scale["max"]
+        disp = self._scale.get("display_labels", {})
         labels = self._scale.get("labels", {})
-        return [{"value": v, "label": labels.get(str(v), str(v))} for v in range(lo, hi + 1)]
+        out = []
+        for v in range(lo, hi + 1):
+            lab = disp.get(str(v)) or labels.get(str(v), str(v))
+            if str(lab).isdigit():
+                lab = str(v)
+            out.append({"value": v, "label": lab})
+        return out
 
     def questions(self):
         out = []

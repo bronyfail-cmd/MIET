@@ -32,7 +32,7 @@
     {% for r in rows %}
     <tr>
       <td>{{ r['full_name'] }}</td><td>{{ r['study_group'] }}</td><td>{{ r['title'] }}</td>
-      <td>{% if r['score'] is not none %}{{ r['score']|round(1) }} / {{ r['max_score']|round(1) }}{% endif %}</td>
+      <td>{% if r['score'] is not none %}{{ r['score']|num }} / {{ r['max_score']|num }}{% endif %}</td>
       <td>{{ r['level'] or '' }}</td><td>{{ r['status'] }}</td><td>{{ r['finished_at'] }}</td>
       <td><a href="{{ url_for('web.result', attempt_id=r['attempt_id']) }}">Портрет</a></td>
     </tr>
