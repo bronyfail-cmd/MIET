@@ -72,6 +72,26 @@ def test_out_of_scale_answer_rejected(methods, bad):
         m.score({m.qid(1): bad})
 
 
+def test_skip_all_is_incomplete(methods):
+    """Полный пропуск всех вопросов даёт статус incomplete."""
+    mid, m = next(iter(methods.items()))
+    res = m.score({})
+    assert res["status"] == "incomplete"
+    assert res["answered"] == 0
+    assert len(res["skipped"]) == len(m._items)
+
+
+def test_many_skips_is_incomplete(methods):
+    """Много пропусков даёт статус incomplete."""
+    mid, m = next(iter(methods.items()))
+    answers = all_answers(m, lambda o: o[0]["value"])
+    for i, item in enumerate(m._items):
+        if i % 2 == 0:
+            answers[m.qid(item["n"])] = None
+    res = m.score(answers)
+    assert res["status"] == "incomplete"
+
+
 def test_broken_json_does_not_crash_loader(tmp_path):
     (tmp_path / "broken.json").write_text("{not json", encoding="utf-8")
     (tmp_path / "nokeys.json").write_text(json.dumps({"id": "x"}), encoding="utf-8")
