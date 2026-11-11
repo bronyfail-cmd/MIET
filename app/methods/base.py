@@ -66,14 +66,13 @@ class Methodology:
                 # Убираем баллы типа "(-3)", "(-2)" из label
                 label = re.sub(r'\s*\(-?\d+\)\s*', ' ', label).strip()
                 # Добавляем нумерацию: "1) Вариант"
-                label = f"{i+1}) {label}"
                 out.append({"value": value, "label": label})
             return out
         lo, hi = self._scale["min"], self._scale["max"]
         disp = self._scale.get("display_labels", {})
         labels = self._scale.get("labels", {})
         out = []
-        for v in range(lo, hi + 1):
+        for i, v in enumerate(range(lo, hi + 1)):
             lab = disp.get(str(v)) or labels.get(str(v), str(v))
             if str(lab).isdigit() or (str(lab).startswith('-') and str(lab)[1:].isdigit()):
                 lab = str(v)
