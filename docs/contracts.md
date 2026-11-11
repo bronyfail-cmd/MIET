@@ -34,6 +34,39 @@
 - `choice`: у вопроса `options: [...]` и `correct: <индекс верного>`; 1 балл за верный.
 - Уровень выбирается по доле набранного от максимума: первый `upto`, не меньший доли.
 
+### kind="ipsative" (ипсативные методики выбора)
+
+Для методик, где ответ — выбор одного варианта из пары, а баллы считаются как
+частота выборов каждой категории:
+```json
+{
+  "id": "communication_styles",
+  "kind": "ipsative",
+  "subscales": {"action": "Действие", "people": "Люди"},
+  "interpretations": {"action": "Стиль «Действие»", "people": "Стиль «Люди»"},
+  "questions": [
+    {"n": 1, "text": "…", "options": [
+      {"value": 0, "label": "А: …", "subscale": "action"},
+      {"value": 1, "label": "Б: …", "subscale": "people"}
+    ]}
+  ],
+  "levels": [
+    {"upto": 0.34, "name": "низкий"},
+    {"upto": 0.66, "name": "средний"},
+    {"upto": 1.0, "name": "высокий"}
+  ]
+}
+```
+- У каждого варианта обязателен `subscale`, входящий в `subscales`; поле `correct`
+  не используется и считается ошибкой.
+- `counts[subscale]` — число выбранных вариантов этой категории (пропуски не
+  учитываются). `subscales[имя] = {"score": count, "max": N, "percent": count/N}`,
+  где `N` — общее число вопросов.
+- Доминанта — субшкала с максимальным `count` (при равенстве — первая по порядку
+  в `subscales`). `score = counts[dom]`, `max_score = N`, `percent = score/N`.
+- `interpretation` берётся из `interpretations[dom]`; если текста нет — из уровня.
+- `levels_note` (необязательно) фиксирует, что пороги условные.
+
 ## Результат методики (методика → сборщик)
 ```json
 {"method_id": "…", "title": "…", "score": 21.0, "max_score": 30.0, "percent": 0.7,

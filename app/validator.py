@@ -89,5 +89,5 @@ def _check_scoring(mid, method, questions, issues):
         if name == "skip" and result["status"] != "incomplete":
             issues.append(_issue("error", mid, "scoring", "при полном пропуске статус должен быть 'incomplete'"))
         sub_total = sum(s["score"] for s in result["subscales"].values())
-        if result["subscales"] and abs(sub_total - result["score"]) > 1e-9:
+        if method.kind != "ipsative" and result["subscales"] and abs(sub_total - result["score"]) > 1e-9:
             issues.append(_issue("error", mid, "sums", f"сценарий '{name}': сумма по субшкалам {sub_total} ≠ общий балл {result['score']}"))

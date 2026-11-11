@@ -98,3 +98,14 @@ def test_broken_json_does_not_crash_loader(tmp_path):
     methods, errors = load_methodologies(tmp_path)
     assert methods == {}
     assert {e["file"] for e in errors} == {"broken.json", "nokeys.json"}
+
+
+def test_ipsative_counts_choices(methods):
+    m = methods.get("communication_styles")
+    if m is None:
+        pytest.skip("нет ipsative-методики")
+    ans = {m.qid(i["n"]): 0 for i in m._items}
+    res = m.score(ans)
+    assert res["status"] == "ok"
+    assert sum(s["score"] for s in res["subscales"].values()) == len(m._items)
+    assert res["score"] == max(s["score"] for s in res["subscales"].values())

@@ -44,14 +44,17 @@ class Methodology:
         self._items = spec["questions"]
         self._levels = spec["levels"]
         self._subscales = spec.get("subscales", {})
+        self._interpretations = spec.get("interpretations", {})
         self._scale = spec.get("scale", {"min": 1, "max": 5, "labels": {}})
+        if self.kind == "ipsative" and (not self._subscales or not self._interpretations):
+            raise MethodologyError("для ipsative нужны subscales и interpretations")
 
     # ---------- вопросы ----------
     def qid(self, n):
         return f"{self.id}.{n}"
 
     def options_for(self, item):
-        if self.kind == "choice":
+        if self.kind in ("choice", "ipsative"):
             out = []
             for i, opt in enumerate(item["options"]):
                 if isinstance(opt, dict):
@@ -96,6 +99,18 @@ class Methodology:
                 correct = item.get("correct")
                 if not isinstance(correct, int) or not 0 <= correct < len(item.get("options", [])):
                     problems.append(f"вопрос {item['n']}: ключ {correct!r} не указывает на вариант ответа")
+            elif self.kind == "ipsative":
+                options = item.get("options", [])
+                if len(options) < 2:
+                    problems.append(f"вопрос {item['n']}: меньше двух вариантов ответа")
+                if "correct" in item:
+                    problems.append(f"вопрос {item['n']}: поле correct недопустимо для ipsative")
+                for opt in options:
+                    if not isinstance(opt, dict) or "subscale" not in opt:
+                        problems.append(f"вопрос {item['n']}: у варианта нет subscale")
+                    elif opt["subscale"] not in self._subscales:
+                        problems.append(
+                            f"вопрос {item['n']}: неизвестная субшкала {opt['subscale']!r}")
             elif item.get("subscale") and item["subscale"] not in self._subscales:
                 problems.append(f"вопрос {item['n']}: неизвестная субшкала {item['subscale']!r}")
         previous = 0.0
@@ -128,8 +143,64 @@ class Methodology:
                 return level
         return self._levels[-1]
 
+    def _score_ipsative(self, answers):
+        total_n = len(self._items)
+        counts = {key: 0 for key in self._subscales}
+        skipped = []
+        answered = 0
+        for item in self._items:
+            qid = self.qid(item["n"])
+            value = answers.get(qid)
+            if value is None:
+                skipped.append(qid)
+                continue
+            options = item.get("options", [])
+            if not isinstance(value, int) or not 0 <= value < len(options):
+                raise MethodologyError(f"недопустимый вариант {value!r} для вопроса {item['n']}")
+            opt = options[value]
+            sub = opt.get("subscale") if isinstance(opt, dict) else None
+            if sub not in counts:
+                raise MethodologyError(
+                    f"вариант {value!r} вопроса {item['n']} без корректной субшкалы")
+            counts[sub] += 1
+            answered += 1
+
+        dom = None
+        for key in self._subscales:
+            if dom is None or counts[key] > counts[dom]:
+                dom = key
+        score = counts[dom] if dom is not None else 0
+        max_score = total_n
+        percent = round(score / max_score, 4) if max_score else 0.0
+        too_many_skips = len(skipped) > MAX_SKIPPED_SHARE * total_n
+        level = self.level_for(percent)
+        interpretation = (self._interpretations.get(dom)
+                          or level.get("text") or level.get("name", ""))
+        subscales = {}
+        for key in self._subscales:
+            subscales[self._subscales[key]] = {
+                "score": counts[key],
+                "max": max_score,
+                "percent": round(counts[key] / max_score, 4) if max_score else 0.0,
+            }
+        return {
+            "method_id": self.id,
+            "title": self.title,
+            "score": score,
+            "max_score": max_score,
+            "percent": percent,
+            "level": level["name"],
+            "interpretation": interpretation,
+            "subscales": subscales,
+            "answered": answered,
+            "skipped": skipped,
+            "status": "incomplete" if too_many_skips or not answered else "ok",
+        }
+
     def score(self, answers):
         """answers: {question_id: int | None}. None или отсутствие ключа = пропуск."""
+        if self.kind == "ipsative":
+            return self._score_ipsative(answers)
         total = 0.0
         max_total = 0.0
         skipped = []
