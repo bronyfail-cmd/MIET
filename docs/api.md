@@ -11,8 +11,8 @@
   `{"id": "<method>.<n>", "text": str, "type": "scale"|"choice",
     "options": [{"value": int, "label": str}, ...]}`
 - `qid(n) -> str`: id вопроса `<method>.<n>`.
-- `options_for(item) -> list[dict]`: варианты для шаблона; label нумеруются
-  ("1) текст"), баллы ключей и скобки вида "(-3)" в label не попадают.
+- `options_for(item) -> list[dict]`: варианты для шаблона;
+  Баллы ключей и скобки вида "(-3)" в label не попадают.
 - `score(answers) -> dict`: результат методики (формат — docs/portrait_format.md);
   `answers = {qid: int | None}`, None = пропуск.
 - `check_keys() -> list[str]`: внутренние проблемы ключей (пусто = ок).
